@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCS Photo Gallery</title>
+<style>
+  :root { --bg:#0a0a0a; --steel:#c0c0c0; --accent:#ff3b00; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--steel); font-family:'Inter',system-ui,sans-serif; padding:24px; }
+  h1 { font-size:1.4rem; letter-spacing:.05em; margin-bottom:4px; }
+  .sub { color:#666; font-size:.85rem; margin-bottom:20px; }
+  .filters { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .chip { background:#141414; border:1px solid #222; color:#888; padding:6px 14px; border-radius:20px; font-size:.8rem; cursor:pointer; }
+  .chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+  .cell { aspect-ratio:4/3; background:#111; border:1px solid #1c1c1c; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; cursor:pointer; transition:.15s; }
+  .cell:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .cell .ic { font-size:1.6rem; }
+  .cell .cap { font-size:.7rem; color:#666; text-align:center; padding:0 8px; }
+  .cell .tag { font-size:.6rem; color:var(--accent); text-transform:uppercase; letter-spacing:.08em; }
+</style>
+</head>
+<body>
+  <h1>PROJECT GALLERY</h1>
+  <div class="sub">2,000+ builds · 35 states · Low's Custom Stainless</div>
+  <div class="filters">
+    <div class="chip active" onclick="filt(this,'all')">All</div>
+    <div class="chip" onclick="filt(this,'bar')">Bar Tops</div>
+    <div class="chip" onclick="filt(this,'kitchen')">Kitchens</div>
+    <div class="chip" onclick="filt(this,'flash')">Flashing</div>
+    <div class="chip" onclick="filt(this,'wrap')">Column Wraps</div>
+    <div class="chip" onclick="filt(this,'keg')">Keg Racks</div>
+  </div>
+  <div class="grid" id="grid"></div>
+<script>
+const PICS=[
+  {t:'bar',ic:'\u{1F37A}',c:'Bull nose bar top',tag:'In-N-Out'},
+  {t:'bar',ic:'\u{1F37A}',c:'TIG-welded bar top',tag:'Yard House'},
+  {t:'kitchen',ic:'\u{1F373}',c:'Full kitchen integration',tag:'Chipotle'},
+  {t:'kitchen',ic:'\u{1F373}',c:'Refer unit + counter',tag:'Kaiser'},
+  {t:'flash',ic:'\u26A1',c:'13ft wall flashing',tag:'Residential'},
+  {t:'wrap',ic:'\u{1F3DB}',c:'Column wrap fins',tag:'Eddie V\'s'},
+  {t:'keg',ic:'\u{1F37B}',c:'Custom keg rack',tag:'Dave & Busters'},
+  {t:'bar',ic:'\u{1F37A}',c:'Stainless bar station',tag:'SoFi Stadium'},
+  {t:'kitchen',ic:'\u{1F373}',c:'Pan top + hot wells',tag:'Urban Plates'},
+  {t:'wrap',ic:'\u{1F3DB}',c:'Hand railings 1/2"',tag:'Commercial'},
+  {t:'flash',ic:'\u26A1',c:'Corner guards',tag:'Apple'},
+  {t:'keg',ic:'\u{1F37B}',c:'Beer tower mount',tag:'Popeyes'},
+];
+function filt(el,cat){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const g=document.getElementById('grid');
+  const show=cat==='all'?PICS:PICS.filter(p=>p.t===cat);
+  g.innerHTML=show.map(p=>`<div class="cell" onclick="alert('${p.c} \u2014 ${p.tag}')"><div class="ic">${p.ic}</div><div class="cap">${p.c}</div><div class="tag">${p.tag}</div></div>`).join('');
+}
+filt(document.querySelector('.chip'),'all');
+</script>
+</body>
+</html>

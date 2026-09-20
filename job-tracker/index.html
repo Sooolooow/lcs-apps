@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCS Job Tracker</title>
+<style>
+  :root { --bg:#0a0a0a; --steel:#c0c0c0; --accent:#ff3b00; --panel:#141414; --green:#2ecc71; --amber:#f1c40f; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--steel); font-family:'Inter',system-ui,sans-serif; padding:24px; }
+  h1 { font-size:1.4rem; letter-spacing:.05em; margin-bottom:4px; }
+  .sub { color:#666; font-size:.85rem; margin-bottom:20px; }
+  .stats { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .stat { background:var(--panel); border:1px solid #222; border-radius:10px; padding:14px 18px; min-width:120px; }
+  .stat b { display:block; font-size:1.6rem; color:#fff; }
+  .stat span { font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:#888; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:12px; overflow:hidden; }
+  th { text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:#666; padding:12px 14px; border-bottom:1px solid #222; }
+  td { padding:12px 14px; border-bottom:1px solid #1a1a1a; font-size:.9rem; }
+  tr:hover td { background:#181818; }
+  .badge { font-size:.65rem; padding:3px 8px; border-radius:4px; font-weight:600; }
+  .b-quote { background:#333; color:#aaa; }
+  .b-fab { background:#1a3a5c; color:#5dade2; }
+  .b-ship { background:#3a2a00; color:var(--amber); }
+  .b-install { background:#1a3a1a; color:var(--green); }
+  .b-done { background:#1a1a1a; color:#555; }
+  .client { color:#fff; font-weight:600; }
+  .add { background:var(--accent); color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:600; cursor:pointer; margin-bottom:16px; }
+</style>
+</head>
+<body>
+  <h1>LCS JOB TRACKER</h1>
+  <div class="sub">Pipeline from quote to install · Low's Custom Stainless</div>
+  <button class="add" onclick="addJob()">+ NEW JOB</button>
+  <div class="stats" id="stats"></div>
+  <table>
+    <thead><tr><th>Job</th><th>Client</th><th>Type</th><th>Value</th><th>Stage</th><th>Due</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+<script>
+const JOBS = [
+  {id:'LCS-1042', client:'In-N-Out #447', type:'Bar Top', val:18500, stage:'install', due:'Sep 22'},
+  {id:'LCS-1043', client:'SoFi Stadium', type:'Column Wrap', val:42000, stage:'fab', due:'Oct 5'},
+  {id:'LCS-1044', client:'Chipotle DT', type:'Counter', val:9200, stage:'ship', due:'Sep 28'},
+  {id:'LCS-1045', client:'Apple Campus', type:'Keg Rack', val:31000, stage:'quote', due:'Oct 12'},
+  {id:'LCS-1046', client:'Dave & Busters', type:'Bar Top', val:26800, stage:'fab', due:'Oct 18'},
+  {id:'LCS-1047', client:'Kaiser Med', type:'Sink Unit', val:7400, stage:'done', due:'Sep 10'},
+];
+const STAGES = { quote:'b-quote', fab:'b-fab', ship:'b-ship', install:'b-install', done:'b-done' };
+const LABELS = { quote:'QUOTE', fab:'FABRICATING', ship:'SHIPPING', install:'INSTALLING', done:'COMPLETE' };
+function render(){
+  const tb=document.getElementById('rows');
+  tb.innerHTML=JOBS.map(j=>`<tr>
+    <td class="client">${j.id}</td><td>${j.client}</td><td>${j.type}</td>
+    <td>$${j.val.toLocaleString()}</td>
+    <td><span class="badge ${STAGES[j.stage]}">${LABELS[j.stage]}</span></td>
+    <td>${j.due}</td></tr>`).join('');
+  const active=JOBS.filter(j=>j.stage!=='done');
+  const val=active.reduce((s,j)=>s+j.val,0);
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><b>${JOBS.length}</b><span>Total jobs</span></div>
+    <div class="stat"><b>${active.length}</b><span>Active</span></div>
+    <div class="stat"><b>$${Math.round(val/1000)}k</b><span>Pipeline value</span></div>
+    <div class="stat"><b>${JOBS.filter(j=>j.stage==='install').length}</b><span>On site now</span></div>`;
+}
+function addJob(){ alert('Opens intake form — wired to Drive + QBO in production'); }
+render();
+</script>
+</body>
+</html>

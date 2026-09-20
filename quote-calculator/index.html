@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCS Quote Calculator</title>
+<style>
+  :root { --bg:#0a0a0a; --steel:#c0c0c0; --accent:#ff3b00; --panel:#141414; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--steel); font-family:'Inter',system-ui,sans-serif; padding:24px; }
+  h1 { font-size:1.4rem; letter-spacing:.05em; margin-bottom:8px; }
+  .sub { color:#666; font-size:.85rem; margin-bottom:24px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:900px; }
+  .card { background:var(--panel); border:1px solid #222; border-radius:12px; padding:20px; }
+  label { display:block; font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:#888; margin-bottom:6px; }
+  input, select { width:100%; background:#0d0d0d; border:1px solid #2a2a2a; color:var(--steel); padding:10px 12px; border-radius:8px; font-size:.95rem; margin-bottom:14px; }
+  input:focus, select:focus { outline:none; border-color:var(--accent); }
+  .row { display:flex; gap:12px; }
+  .row > div { flex:1; }
+  .total { font-size:2rem; font-weight:700; color:#fff; margin-top:8px; }
+  .total small { font-size:.7rem; color:#666; font-weight:400; }
+  .btn { background:var(--accent); color:#fff; border:none; padding:12px 20px; border-radius:8px; font-weight:600; cursor:pointer; width:100%; margin-top:8px; }
+  .btn:hover { filter:brightness(1.1); }
+  .line { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #1c1c1c; font-size:.9rem; }
+  .line:last-child { border:none; }
+  .tag { display:inline-block; background:#1c1c1c; color:#888; font-size:.7rem; padding:2px 8px; border-radius:4px; margin-left:6px; }
+</style>
+</head>
+<body>
+  <h1>LCS QUOTE CALCULATOR</h1>
+  <div class="sub">Low's Custom Stainless · instant ballpark from real shop inputs</div>
+  <div class="grid">
+    <div class="card">
+      <label>Part type</label>
+      <select id="part">
+        <option value="bar">Bar Top</option>
+        <option value="counter">Counter / Worktop</option>
+        <option value="keg">Keg Rack</option>
+        <option value="flash">Wall Flashing</option>
+        <option value="column">Column Wrap</option>
+        <option value="sink">Sink / Refer Unit</option>
+      </select>
+      <div class="row">
+        <div><label>Length (in)</label><input id="len" type="number" value="120" min="12"></div>
+        <div><label>Width (in)</label><input id="wid" type="number" value="24" min="6"></div>
+      </div>
+      <div class="row">
+        <div><label>Material</label>
+          <select id="mat">
+            <option value="304">304 Stainless</option>
+            <option value="316">316L Marine</option>
+            <option value="alum">Aluminum</option>
+            <option value="copper">Copper</option>
+            <option value="brass">Brass</option>
+          </select>
+        </div>
+        <div><label>Gauge</label>
+          <select id="gauge">
+            <option value="18">18 ga</option>
+            <option value="16" selected>16 ga</option>
+            <option value="14">14 ga</option>
+            <option value="12">12 ga</option>
+            <option value="10">10 ga</option>
+          </select>
+        </div>
+      </div>
+      <label>Finish</label>
+      <select id="finish">
+        <option value="brushed">Brushed</option>
+        <option value="mirror">Mirror</option>
+        <option value="grain">Custom Grain</option>
+      </select>
+      <label>Edge profile</label>
+      <select id="edge">
+        <option value="square">Square</option>
+        <option value="bull">Bull Nose</option>
+        <option value="round">Round Over</option>
+        <option value="bevel">Bevel</option>
+      </select>
+      <label>Drink rail</label>
+      <select id="rail">
+        <option value="none">None</option>
+        <option value="under">Under-mount</option>
+        <option value="top">Top-mount</option>
+        <option value="int">Integrated</option>
+      </select>
+      <button class="btn" onclick="calc()">GENERATE QUOTE</button>
+    </div>
+    <div class="card">
+      <label>Quote summary <span class="tag" id="stamp"></span></label>
+      <div id="lines"></div>
+      <div class="total" id="total">$0</div>
+      <div class="sub" style="margin-top:4px">Ballpark only · final quote after field measure</div>
+      <button class="btn" style="background:#222;color:#c0c0c0" onclick="copyQuote()">COPY FOR EMAIL</button>
+    </div>
+  </div>
+<script>
+const RATES = { bar:18, counter:14, keg:22, flash:9, column:16, sink:20 };
+const MAT = { '304':1.0, '316':1.35, alum:0.55, copper:2.4, brass:2.1 };
+const GA = { '18':0.7, '16':1.0, '14':1.4, '12':1.9, '10':2.6 };
+const FIN = { brushed:1.0, mirror:1.25, grain:1.5 };
+const EDGE = { square:0, bull:40, round:30, bevel:25 };
+const RAIL = { none:0, under:120, top:90, int:160 };
+function money(n){ return '$'+Math.round(n).toLocaleString(); }
+function calc(){
+  const p=document.getElementById('part').value;
+  const L=+document.getElementById('len').value, W=+document.getElementById('wid').value;
+  const m=document.getElementById('mat').value, g=document.getElementById('gauge').value;
+  const f=document.getElementById('finish').value, e=document.getElementById('edge').value, r=document.getElementById('rail').value;
+  const area=(L*W)/144;
+  const base=area*RATES[p]*MAT[m]*GA[g]*FIN[f];
+  const edgeCost=EDGE[e];
+  const railCost=RAIL[r];
+  const labor=base*0.45;
+  const total=base+edgeCost+railCost+labor;
+  const lines=[
+    ['Material & fab', money(base)],
+    ['Edge profile ('+e+')', money(edgeCost)],
+    ['Drink rail ('+r+')', money(railCost)],
+    ['Labor & install', money(labor)],
+    ['Subtotal', money(total)]
+  ];
+  document.getElementById('lines').innerHTML=lines.map(l=>`<div class="line"><span>${l[0]}</span><span>${l[1]}</span></div>`).join('');
+  document.getElementById('total').innerHTML=money(total)+'<small> + tax</small>';
+  document.getElementById('stamp').textContent=new Date().toLocaleDateString();
+}
+function copyQuote(){
+  const t=document.getElementById('total').textContent;
+  navigator.clipboard.writeText('LCS Quote: '+t+' \u2014 Low\'s Custom Stainless, shane@lowscustomstainless.com');
+  alert('Copied to clipboard');
+}
+calc();
+</script>
+</body>
+</html>
