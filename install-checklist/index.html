@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LCS Install Checklist</title>
 <style>
-  :root { --bg:#0a0a0a; --steel:#c0c0c0; --accent:#ff3b00; --panel:#141414; --green:#2ecc71; }
+  :root { --bg:#0a0a0a; --steel:#c0c0c0; --accent:#ff3b00; --panel:#141414; --green:#2ecc71; --muted:#888; }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { background:var(--bg); color:var(--steel); font-family:'Inter',system-ui,sans-serif; padding:24px; max-width:700px; }
+  body { background:var(--bg); color:var(--steel); font-family:'Inter',system-ui,sans-serif; padding:24px; max-width:760px; margin:0 auto; }
   h1 { font-size:1.4rem; letter-spacing:.05em; margin-bottom:4px; }
-  .sub { color:#666; font-size:.85rem; margin-bottom:20px; }
+  .sub { color:var(--muted); font-size:.85rem; margin-bottom:20px; }
+  a.back { color:var(--accent); text-decoration:none; font-size:.85rem; }
   .job-bar { background:var(--panel); border:1px solid #222; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
   .job-bar b { color:#fff; }
   .item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #1a1a1a; cursor:pointer; }
@@ -22,14 +23,22 @@
   .phase { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:#666; margin:18px 0 6px; }
   .progress { height:6px; background:#1a1a1a; border-radius:3px; margin-bottom:20px; overflow:hidden; }
   .progress > div { height:100%; background:var(--accent); transition:.3s; }
+  .photo-row { display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 4px 34px; }
+  .thumb { width:64px; height:64px; border-radius:8px; object-fit:cover; border:1px solid #222; background:#0d0d0d; }
+  .add-photo { width:64px; height:64px; border-radius:8px; border:1px dashed #333; display:flex; align-items:center; justify-content:center; color:#555; font-size:1.4rem; cursor:pointer; }
+  .add-photo:hover { border-color:var(--accent); color:var(--accent); }
+  input[type=file]{ display:none; }
+  .note { font-size:.75rem; color:var(--muted); margin-top:16px; }
 </style>
 </head>
 <body>
+  <a class="back" href="../">← All LCS Apps</a>
   <h1>INSTALL CHECKLIST</h1>
-  <div class="sub">Field-ready · zero disruption standard</div>
+  <div class="sub">Field-ready · zero disruption standard · photo capture</div>
   <div class="job-bar"><div><b>LCS-1042</b> · In-N-Out #447 · Bar Top</div><div style="color:#888;font-size:.8rem">Due Sep 22</div></div>
   <div class="progress"><div id="bar" style="width:0%"></div></div>
   <div id="list"></div>
+  <p class="note">Tap any item to check it. Tap the + to attach a field photo. All photos save to this device.</p>
 <script>
 const PHASES={
   'PRE-ARRIVAL':['Confirm site access & parking','Verify power & water shutoff','Stage materials off loading zone','PPE on crew'],
@@ -38,23 +47,43 @@ const PHASES={
   'WELD & FINISH':['TIG weld seams','Grind seams to disappear','Blend & polish transitions','Inspect under work light'],
   'CLEAN & HANDOFF':['Wipe down all surfaces','Remove debris & scrap','Client walkthrough','Sign-off + warranty card']
 };
-let state={};
+const KEY='lcs_checklist_v2';
+let state = JSON.parse(localStorage.getItem(KEY) || '{}');
+
 function render(){
   let html='';
   for(const [ph,items] of Object.entries(PHASES)){
     html+=`<div class="phase">${ph}</div>`;
     items.forEach((it,i)=>{
       const key=ph+i;
-      const done=state[key];
+      const done=state[key] && state[key].done;
+      const photos = (state[key] && state[key].photos) || [];
       html+=`<div class="item ${done?'done':''}" onclick="toggle('${key}')"><div class="check"></div><span>${it}</span></div>`;
+      html+=`<div class="photo-row">`;
+      photos.forEach((p,pi)=> html+=`<img class="thumb" src="${p}" onclick="event.stopPropagation();viewPhoto('${key}',${pi})">`);
+      html+=`<label class="add-photo" onclick="event.stopPropagation()">+<input type="file" accept="image/*" capture="environment" onchange="addPhoto('${key}',this)"></label>`;
+      html+=`</div>`;
     });
   }
   document.getElementById('list').innerHTML=html;
   const total=Object.values(PHASES).flat().length;
-  const done=Object.values(state).filter(Boolean).length;
+  const done=Object.values(state).filter(v=>v && v.done).length;
   document.getElementById('bar').style.width=(done/total*100)+'%';
 }
-function toggle(k){ state[k]=!state[k]; render(); }
+function toggle(k){ if(!state[k]) state[k]={done:false,photos:[]}; state[k].done=!state[k].done; save(); render(); }
+function addPhoto(k,input){
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    if(!state[k]) state[k]={done:false,photos:[]};
+    state[k].photos.push(e.target.result);
+    save(); render();
+  };
+  r.readAsDataURL(file);
+  input.value='';
+}
+function viewPhoto(k,pi){ const p=state[k].photos[pi]; if(p) window.open(p); }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 render();
 </script>
 </body>
