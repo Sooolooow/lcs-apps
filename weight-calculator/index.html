@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stainless Weight Calculator | Low's Custom Stainless</title>
+<style>
+  :root { --bg:#0a0e14; --panel:#121826; --accent:#00d4ff; --text:#e6edf3; --muted:#8b949e; --border:#1f2937; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:24px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:1.6rem; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 24px; font-size:.9rem; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+  label { display:block; font-size:.8rem; color:var(--muted); margin:12px 0 4px; text-transform:uppercase; letter-spacing:.05em; }
+  select, input { width:100%; background:#0d1117; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px 12px; font-size:1rem; }
+  select:focus, input:focus { outline:none; border-color:var(--accent); }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .result { background:linear-gradient(135deg,#0d1117,#1a2332); border:1px solid var(--accent); border-radius:10px; padding:18px; margin-top:16px; }
+  .result .big { font-size:2rem; font-weight:700; color:var(--accent); }
+  .result .small { color:var(--muted); font-size:.85rem; margin-top:4px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .grid2 div { background:#0d1117; border-radius:6px; padding:8px 10px; font-size:.85rem; }
+  .grid2 span { color:var(--muted); }
+  a.back { color:var(--accent); text-decoration:none; font-size:.85rem; }
+  .note { font-size:.75rem; color:var(--muted); margin-top:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← All LCS Apps</a>
+  <h1>Stainless Weight Calculator</h1>
+  <p class="sub">Plate, sheet, tube, pipe, and bar stock. Densities from ASM / NIST data.</p>
+
+  <div class="card">
+    <label>Alloy</label>
+    <select id="alloy">
+      <option value="0.286">304 / 304L / 303 (0.286 lb/in³)</option>
+      <option value="0.289" selected>316 / 316L (0.289 lb/in³)</option>
+      <option value="0.280">201 / 202 (0.280 lb/in³)</option>
+      <option value="0.258">430 (0.258 lb/in³)</option>
+    </select>
+
+    <label>Shape</label>
+    <select id="shape">
+      <option value="plate">Plate / Sheet</option>
+      <option value="roundbar">Round Bar</option>
+      <option value="squarebar">Square Bar</option>
+      <option value="tube">Tube / Pipe (round)</option>
+      <option value="recttube">Rectangular Tube</option>
+    </select>
+
+    <div id="dims"></div>
+
+    <label>Number of pieces</label>
+    <input type="number" id="qty" value="1" min="1">
+  </div>
+
+  <div class="result">
+    <div class="big" id="outLb">0 lb</div>
+    <div class="small" id="outKg">0 kg</div>
+    <div class="grid2">
+      <div><span>Per piece</span><br><span id="perLb">0 lb</span></div>
+      <div><span>Volume</span><br><span id="vol">0 in³</span></div>
+    </div>
+  </div>
+  <p class="note">For quoting only. Mill tolerance (ASTM A480) can add ±4% on thin sheet. Confirm with supplier for final weight.</p>
+</div>
+<script>
+const alloy = document.getElementById('alloy');
+const shape = document.getElementById('shape');
+const qty = document.getElementById('qty');
+const dims = document.getElementById('dims');
+
+function field(id, label, unit, val) {
+  return `<label>${label} (${unit})</label><input type="number" id="${id}" value="${val}" step="any" min="0">`;
+}
+
+function renderDims() {
+  const s = shape.value;
+  if (s === 'plate') dims.innerHTML = field('l','Length','in',48) + field('w','Width','in',96) + field('t','Thickness','in',0.25);
+  else if (s === 'roundbar') dims.innerHTML = field('d','Diameter','in',1) + field('l','Length','in',144);
+  else if (s === 'squarebar') dims.innerHTML = field('s','Side','in',1) + field('l','Length','in',144);
+  else if (s === 'tube') dims.innerHTML = field('od','OD','in',2) + field('wt','Wall thickness','in',0.125) + field('l','Length','in',144);
+  else if (s === 'recttube') dims.innerHTML = field('w','Width','in',2) + field('h','Height','in',1) + field('wt','Wall thickness','in',0.125) + field('l','Length','in',144);
+  [...dims.querySelectorAll('input')].forEach(i => i.addEventListener('input', calc));
+  calc();
+}
+
+function calc() {
+  const d = parseFloat(alloy.value);
+  const s = shape.value;
+  const q = Math.max(1, parseFloat(qty.value) || 1);
+  let vol = 0;
+  if (s === 'plate') {
+    const l = +document.getElementById('l').value || 0;
+    const w = +document.getElementById('w').value || 0;
+    const t = +document.getElementById('t').value || 0;
+    vol = l * w * t;
+  } else if (s === 'roundbar') {
+    const dia = +document.getElementById('d').value || 0;
+    const l = +document.getElementById('l').value || 0;
+    vol = Math.PI * Math.pow(dia/2, 2) * l;
+  } else if (s === 'squarebar') {
+    const side = +document.getElementById('s').value || 0;
+    const l = +document.getElementById('l').value || 0;
+    vol = side * side * l;
+  } else if (s === 'tube') {
+    const od = +document.getElementById('od').value || 0;
+    const wt = +document.getElementById('wt').value || 0;
+    const l = +document.getElementById('l').value || 0;
+    const id = Math.max(0, od - 2*wt);
+    vol = Math.PI * (Math.pow(od/2, 2) - Math.pow(id/2, 2)) * l;
+  } else if (s === 'recttube') {
+    const w = +document.getElementById('w').value || 0;
+    const h = +document.getElementById('h').value || 0;
+    const wt = +document.getElementById('wt').value || 0;
+    const l = +document.getElementById('l').value || 0;
+    const iw = Math.max(0, w - 2*wt);
+    const ih = Math.max(0, h - 2*wt);
+    vol = (w*h - iw*ih) * l;
+  }
+  const lb = vol * d * q;
+  const kg = lb * 0.453592;
+  document.getElementById('outLb').textContent = lb.toFixed(1) + ' lb';
+  document.getElementById('outKg').textContent = kg.toFixed(1) + ' kg';
+  document.getElementById('perLb').textContent = (lb/q).toFixed(2) + ' lb';
+  document.getElementById('vol').textContent = vol.toFixed(2) + ' in³';
+}
+
+alloy.addEventListener('change', calc);
+shape.addEventListener('change', renderDims);
+qty.addEventListener('input', calc);
+renderDims();
+</script>
+</body>
+</html>
